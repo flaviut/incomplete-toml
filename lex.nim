@@ -8,7 +8,8 @@ type
     tt_int,
     tt_float,
     tt_bool,
-    tt_string
+    tt_string,
+    tt_datetime
 
   Token* = object
     case kind: TokenType
@@ -20,16 +21,36 @@ type
         floatVal: float64
       of tt_bool:
         boolVal: bool
+      of tt_datetime:
+        datetimeVal: DateTime
       else:
         nil
+
+  DateTime* = object
+    time*: Option[tuple[subsecond: Option[float],  ## ∈ [0, 1)
+                        second: range[0 .. 60],  ## 60 for leap seconds
+                        minute: range[0 .. 59],
+                        hour: range[0 .. 23]]]
+
+    date*: Option[tuple[monthday: range[1 .. 31],
+                        month: range[0 .. 12],
+                        year: range[0 .. 9999]]]
+
+    offset*: Option[tuple[positive: bool,
+                          minute: range[0 .. 59],
+                          hour: range[0 .. 23]]]
+
   LexContext* = ref object
-    input: string
-    idx: int
+    input*: string
+    idx*: int
 
   SyntaxError* = ref object of Exception
 
 proc matchString(ctx: LexContext): Option[string]
 include lex_string
+
+proc matchDateTime(ctx: LexContext): Option[DateTime]
+include lex_datetime
 
 proc matchBool(ctx: LexContext): Option[bool] =
   if ctx.input.continuesWith("true", ctx.idx):
@@ -48,7 +69,7 @@ proc matchInt(ctx: LexContext): Option[int64] =
   var matches: array[1, string]
   if ctx.input.findBounds(IntLit, matches, ctx.idx) != (-1, 0):
     ctx.idx += matches[0].len
-    return Some(parseInt matches[0])
+    return Some[int64](parseInt matches[0])
   return None[int64]()
 
 let
