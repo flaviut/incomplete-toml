@@ -1,6 +1,5 @@
 import re, option, unicode
-from parseutils import parseHex
-from strutils import continuesWith
+from strutils import continuesWith, parseInt
 
 type
   TokenType* = enum
@@ -42,7 +41,17 @@ proc matchBool(ctx: LexContext): Option[bool] =
 
   return None[bool]()
 
-proc nextTok(ctx: LexContext, expected: set[TokenType]): Token =
+let
+  IntLit = re"""([+-]?[0-9]+)"""
+
+proc matchInt(ctx: LexContext): Option[int64] =
+  var matches: array[1, string]
+  if ctx.input.findBounds(IntLit, matches, ctx.idx) != (-1, 0):
+    ctx.idx += matches[0].len
+    return Some(parseInt matches[0])
+  return None[int64]()
+
+proc nextTok(ctx: LexContext, expected: set[TokenType]): Option[Token] =
   discard
 
 echo matchString(LexContext(input : """
