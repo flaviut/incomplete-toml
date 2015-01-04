@@ -1,5 +1,6 @@
 import re, option, unicode
 from parseutils import parseHex
+from strutils import continuesWith
 
 type
   TokenType* = enum
@@ -30,6 +31,16 @@ type
 
 proc matchString(ctx: LexContext): Option[string]
 include lex_string
+
+proc matchBool(ctx: LexContext): Option[bool] =
+  if ctx.input.continuesWith("true", ctx.idx):
+    ctx.idx += 4
+    return Some(true)
+  elif ctx.input.continuesWith("false", ctx.idx):
+    ctx.idx += 5
+    return Some(false)
+
+  return None[bool]()
 
 proc nextTok(ctx: LexContext, expected: set[TokenType]): Token =
   discard
