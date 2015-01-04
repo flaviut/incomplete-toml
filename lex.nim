@@ -1,5 +1,5 @@
 import re, option, unicode
-from strutils import continuesWith, parseInt
+from strutils import continuesWith, parseInt, parseFloat
 
 type
   TokenType* = enum
@@ -50,6 +50,16 @@ proc matchInt(ctx: LexContext): Option[int64] =
     ctx.idx += matches[0].len
     return Some(parseInt matches[0])
   return None[int64]()
+
+let
+  FloatLit = re"""([+-]?[0-9]++(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?) """
+
+proc matchFloat(ctx: LexContext): Option[float64] =
+  var matches: array[1, string]
+  if ctx.input.findBounds(FloatLit, matches, ctx.idx) != (-1, 0):
+    ctx.idx += matches[0].len
+    return Some(parseFloat matches[0])
+  return None[float64]()
 
 proc nextTok(ctx: LexContext, expected: set[TokenType]): Option[Token] =
   discard
