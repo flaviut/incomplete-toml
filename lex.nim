@@ -1,5 +1,5 @@
 import re, option, unicode
-from strutils import continuesWith, parseInt, parseFloat
+from strutils import continuesWith, parseInt, parseFloat, strip, split
 
 type
   TokenType* = enum
@@ -9,7 +9,9 @@ type
     tt_float,
     tt_bool,
     tt_string,
-    tt_datetime
+    tt_datetime,
+    tt_table_head,
+    tt_arr_table_head,
 
   Token* = object
     case kind: TokenType
@@ -23,6 +25,8 @@ type
         boolVal: bool
       of tt_datetime:
         datetimeVal: DateTime
+      of tt_table_head, tt_arr_table_head:
+        headVal: seq[string]
       else:
         nil
 
@@ -73,7 +77,7 @@ proc matchInt(ctx: LexContext): Option[int64] =
   return None[int64]()
 
 let
-  FloatLit = re"""([+-]?[0-9]++(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?) """
+  FloatLit = re"""([+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?) """
 
 proc matchFloat(ctx: LexContext): Option[float64] =
   var matches: array[1, string]
@@ -82,10 +86,39 @@ proc matchFloat(ctx: LexContext): Option[float64] =
     return Some(parseFloat matches[0])
   return None[float64]()
 
+let
+  HeaderInclude = """
+  (?(DEFINE)
+    (?<ident_chars> [^\x00-\x19\n=\[\]"'#]+)
+    (?<ident> (?&ident_chars) (?: \. (?&ident_chars)*) )
+  )
+  """
+  RoughTableHeader = re""" \[ [^\[\]]* \] """
+  RoughArrTableHeader = re""" \[\[ [^\]\[]* \]\] """
+  TableHeader = re(""" \[ ((?&ident)) \] """ & HeaderInclude)
+  ArrTableHeader = re(""" \[\[ ((?&ident)) \]\] """ & HeaderInclude)
+
+proc matchHeader(str: string, idx: var int, regex: Regex, roughRegex: Regex): Option[seq[string]] =
+  let roughBounds = str.findBounds(roughRegex, idx)
+  if roughBounds != (-1, 0):
+    var matches: array[1, string]
+    let bounds = str.findBounds(regex, matches, idx)
+    if bounds != (-1, 0):
+      assert(bounds == roughBounds)
+      idx += bounds.last - bounds.first
+      return Some(matches[0]
+                  .split('.')
+                  .map(proc (str: string): string = strip(str)))
+    else:
+      raise SyntaxError(msg: $idx & ": Invalid header")
+  else:
+    return None[seq[string]]()
+
+proc matchTableHeader(ctx: LexContext): Option[seq[string]] =
+  return matchHeader(ctx.input, ctx.idx, TableHeader, RoughTableHeader)
+
+proc matchArrTableHeader(ctx: LexContext): Option[seq[string]] =
+  return matchHeader(ctx.input, ctx.idx, ArrTableHeader, RoughArrTableHeader)
+
 proc nextTok(ctx: LexContext, expected: set[TokenType]): Option[Token] =
   discard
-
-echo matchString(LexContext(input : """
-"123 12 321 312 "
-"""
-))
