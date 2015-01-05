@@ -24,7 +24,7 @@ let
   ((?&timeoffset))
   """ & DateTimeInclude)
 
-  TimeOffset = re(""" ([+-]) ((?&hour)) : ((?&miniute)) | ([zZ]) """)
+  TimeOffset = re(""" ([+-]) ((?&hour)) : ((?&minute)) | ([zZ]) """ & DateTimeInclude)
 
   FullDateLit = re("""((?&fullyear))-((?&month))-((?&mday))""" & DateTimeInclude)
 
