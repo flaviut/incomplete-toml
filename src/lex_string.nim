@@ -8,8 +8,7 @@ const StringLitUtil = """
   (?<escaped>
     \\" | \\\\ | \\\/ | \\b |
     \\f | \\n  | \\r  | \\t |
-    \\u [0-9a-zA-Z]{4}      |
-    \\u [0-9a-zA-Z]{8}
+    \\[uU] [0-9a-zA-Z]{2,8} |
   )
   (?<newline> [\n\r])
 
@@ -33,48 +32,48 @@ const StringLitUtil = """
 """
 
 let
-  BasicStringLit = re(StringLitUtil & """
+  BasicStringLit = re("""
 # Basic String
 ^"( (?&basic_char)* )"
-""")
+""" & StringLitUtil)
 
-  MultilineStringLit = re(StringLitUtil & """
+  MultilineStringLit = re("""
 # Multiline String
 ^" " "( (?&ml_basic_body)* )" " "
-""")
+""" & StringLitUtil)
 
 
-  LiteralStringLit = re(StringLitUtil & """
+  LiteralStringLit = re("""
 # Literal String
 ^'( (?&literal_char)* )'
-""")
+""" & StringLitUtil)
 
-  MultilineLiteralStringLit = re(StringLitUtil & """
+  MultilineLiteralStringLit = re("""
 # Multiline Literal String
 ^'''( (?&ml_literal_body)* )'''
-""")
+""" & StringLitUtil)
 
 
-  DumbMultilineStringLit = re(StringLitUtil & """
+  DumbMultilineStringLit = re("""
 # Dumb Multiline String
 ^" " "( (?&dumb_ml_basic_body)* )" " "
-""")
+""" & StringLitUtil)
 
-  DumbBasicStringLit = re(StringLitUtil & """
+  DumbBasicStringLit = re("""
 # Dumb Basic String
 ^"( (?&dumb_basic_char)* )"
-""")
+""" & StringLitUtil)
 
 
-  DumbLiteralStringLit = re(StringLitUtil & """
+  DumbLiteralStringLit = re("""
 # Dumb Literal String
 ^'( (?&dumb_literal_char)* )'
-""")
+""" & StringLitUtil)
 
-  DumbMultilineLiteralStringLit = re(StringLitUtil & """
+  DumbMultilineLiteralStringLit = re("""
 # Dumb Multiline Literal String
 ^'''( (?&dumb_ml_literal_body)* )'''
-""")
+""" & StringLitUtil)
 
   StringMatchers: seq[tuple[matcher, roughMatcher: Regex,
                             interpretEscapes: bool]] = @[
@@ -95,7 +94,7 @@ let EscapeReplacements = @[
   (re"\\t", "\t"),
 ]
 
-let UnicodeEscape = re"\\u([0-9a-zA-Z]{4})|\\u([0-9a-zA-Z]{8})"
+let UnicodeEscape = re"\\[uU]([0-9a-zA-Z]{2,8})"
 
 proc interpretEscapes(str: string): string =
   ## Assumes the input is valid
@@ -109,8 +108,7 @@ proc interpretEscapes(str: string): string =
     return Rune(num).toUTF8
 
 proc matchString(ctx: LexContext): Option[string] =
-  const CaptureNum = 12
-  var matches: array[CaptureNum + 1, string]
+  var matches: array[1, string]
 
   for row in StringMatchers:
     let roughMatch = ctx.input.findBounds(row.roughMatcher, ctx.idx)
@@ -123,9 +121,9 @@ proc matchString(ctx: LexContext): Option[string] =
       ctx.idx += match.last - match.first
 
       if row.interpretEscapes:
-        return Some(interpretEscapes(matches[CaptureNum]))
+        return Some(interpretEscapes(matches[0]))
 
-      return Some(matches[CaptureNum])
+      return Some(matches[0])
 
   return None[string]()
 
