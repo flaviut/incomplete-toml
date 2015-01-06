@@ -28,50 +28,41 @@ const StringLitUtil = """
   (?<ml_literal_body>      [\x09\x20-\xFF] | (?&newline))
   (?<dumb_ml_literal_body> (?!''')[\s\S])
 )
-
 """
 
 let
   BasicStringLit = re("""
-# Basic String
 ^"( (?&basic_char)* )"
 """ & StringLitUtil)
 
   MultilineStringLit = re("""
-# Multiline String
 ^" " "( (?&ml_basic_body)* )" " "
 """ & StringLitUtil)
 
 
   LiteralStringLit = re("""
-# Literal String
 ^'( (?&literal_char)* )'
 """ & StringLitUtil)
 
   MultilineLiteralStringLit = re("""
-# Multiline Literal String
 ^'''( (?&ml_literal_body)* )'''
 """ & StringLitUtil)
 
 
   DumbMultilineStringLit = re("""
-# Dumb Multiline String
 ^" " "( (?&dumb_ml_basic_body)* )" " "
 """ & StringLitUtil)
 
   DumbBasicStringLit = re("""
-# Dumb Basic String
 ^"( (?&dumb_basic_char)* )"
 """ & StringLitUtil)
 
 
   DumbLiteralStringLit = re("""
-# Dumb Literal String
 ^'( (?&dumb_literal_char)* )'
 """ & StringLitUtil)
 
   DumbMultilineLiteralStringLit = re("""
-# Dumb Multiline Literal String
 ^'''( (?&dumb_ml_literal_body)* )'''
 """ & StringLitUtil)
 
