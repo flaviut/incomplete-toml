@@ -31,7 +31,7 @@ proc get*[T](self: Option[T]): T =
   if self.isSome:
     return self.unsafeGet
   else:
-    raise newException(EInvalidField, "Cannot fetch value from a None")
+    raise newException(FieldError, "Cannot fetch value from a None")
 
 proc map*[T, R](self: Option[T], oper: proc (input: T): R): Option[R] =
   if self:
