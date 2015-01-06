@@ -17,9 +17,9 @@ const StringLitUtil = """
   (?<dumb_basic_char>     \\\\|\\"|[^"] )
 
   (?<ml_basic_unescaped>  [\x20-\x5B\x5D-\xFF] )
-  (?<ml_basic_body>       (?&ml_basic_unescaped) |
-                          (?&escaped) |
-                          \\? (?&newline) )
+  (?<ml_basic_body>       (?!" " ")(?:(?&ml_basic_unescaped) |
+                          \\? [\n\r]|
+                          (?&escaped)))
   (?<dumb_ml_basic_body>  (?!" " ")(?: (?&dumb_basic_char) | "))
 
   (?<literal_char>        [\x09\x20-\x26\x28-\xFF])
