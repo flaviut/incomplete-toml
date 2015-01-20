@@ -51,11 +51,14 @@ proc fillPartialTime(result: var DateTime, matches: openarray[string], offset: i
     hour   : range[0 .. 23](parseInt matches[0 + offset]),
   ))
 
-proc fillFullTime(result: var DateTime, matches: openarray[string], offset: int) =
+proc fillFullTime(result: var DateTime, oldMatches: openarray[string], offset: int) =
   var offset = offset
-  result.fillPartialTime(matches, offset)
-  if matches[4 + offset] =~ TimeOffset:
-    if matches[3].toLower == "z":
+  result.fillPartialTime(oldMatches, offset)
+  assert(oldMatches[4 + offset] != nil)
+  if oldMatches[4 + offset] =~ TimeOffset:
+    if matches[3] != nil and
+       matches[3].len == 1 and
+       matches[3][0] in {'z', 'Z'}:
       # UTC is defined as +00:00
       result.offset = Some((
         positive : true,
@@ -64,13 +67,13 @@ proc fillFullTime(result: var DateTime, matches: openarray[string], offset: int)
       ))
     else:
       result.offset = Some((
-        positive : matches[0 + offset] == "+",
-        minute   : range[0 .. 59](parseInt matches[2 + offset]),
-        hour     : range[0 .. 23](parseInt matches[1 + offset]),
+        positive : matches[0] == "+",
+        minute   : range[0 .. 59](parseInt matches[2]),
+        hour     : range[0 .. 23](parseInt matches[1]),
       ))
   else:
     raise newException(ValueError,
-      "unable to parse input `$1` as a timezone offset" % [matches[4 + offset]])
+      "unable to parse input `$1` as a timezone offset" % [oldMatches[4 + offset]])
 
 proc matchDateTime(ctx: LexContext): Option[DateTime] =
   var matches: array[8, string]

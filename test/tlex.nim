@@ -34,9 +34,16 @@ suite "string matching":
     expect(SyntaxError): discard tc("'\x00'").matchString
     expect(SyntaxError): discard tc("\"\x00\"").matchString
 
-
-
 # proc matchDateTime(ctx: LexContext): Option[DateTime]
+suite "datetime matching":
+  # grabbed from python
+  check(tc("1985-04-12T23:20:50.52Z").matchDateTime())
+  check(tc("1996-12-19T16:39:57-08:00").matchDateTime())
+  check(tc("1996-12-19T16:39:57-08:00").matchDateTime())
+  check(tc("1990-12-31T23:59:60Z").matchDateTime())
+  check(tc("1990-12-31T15:59:60-08:00").matchDateTime())
+  check(tc("2008-04-02T20:00:00Z").matchDateTime())
+  check(tc("1970-01-01T00:00:00Z").matchDateTime())
 # proc matchBool(ctx: LexContext): Option[bool]
 # proc matchInt(ctx: LexContext): Option[int64]
 # proc matchFloat(ctx: LexContext): Option[float64]
